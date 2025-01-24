@@ -67,3 +67,35 @@ export const register = catchAsyncErrors(async (req, res, next) => {
 
     generateToken(user, "User registered successfully", 201, res);
 });
+
+export const login = catchAsyncErrors(async (req, res, next) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return next(new ErrorHandler('Please enter email and password'));
+    }
+
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+        return next(new ErrorHandler('Invalid Email or Password'));
+    }
+
+    const isPasswordMatched = await user.comparePassword(password);
+
+    if (!isPasswordMatched) {
+        return next(new ErrorHandler('Invalid Email or Password'));
+    }
+
+    generateToken(user, "User logged in successfully", 200, res);
+});
+
+export const logout = catchAsyncErrors(async (req, res, next) => {
+    res.status(200).cookie('token', "", {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+    }).json({
+        success: true,
+        message: "Logged out",
+    });
+});
