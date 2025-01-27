@@ -267,4 +267,4 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     generateToken(user, "Reset Password Successfully", 200, res);
-});
+}); 
