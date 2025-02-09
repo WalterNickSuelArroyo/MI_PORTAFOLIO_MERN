@@ -44,6 +44,7 @@ export const register = catchAsyncErrors(async (req, res, next) => {
         linkedinURL,
         youtubeURL,
         facebookURL,
+        instagramURL,
     } = req.body;
 
     const user = await User.create({
@@ -57,6 +58,7 @@ export const register = catchAsyncErrors(async (req, res, next) => {
         linkedinURL,
         youtubeURL,
         facebookURL,
+        instagramURL,
         avatar: {
             public_id: cloudinaryResponseForAvatar.public_id,
             url: cloudinaryResponseForAvatar.secure_url,
@@ -74,19 +76,19 @@ export const login = catchAsyncErrors(async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return next(new ErrorHandler('Please enter email and password'));
+        return next(new ErrorHandler('Por favor, ingresa una contraseña y un correo electrónico', 400));
     }
 
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-        return next(new ErrorHandler('Invalid Email or Password'));
+        return next(new ErrorHandler('Correo o contraseña incorrectos', 401));
     }
 
     const isPasswordMatched = await user.comparePassword(password);
 
     if (!isPasswordMatched) {
-        return next(new ErrorHandler('Invalid Email or Password'));
+        return next(new ErrorHandler('Correo o contraseña incorrectos', 401));
     }
 
     generateToken(user, "User logged in successfully", 200, res);
@@ -122,6 +124,7 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
         linkedinURL: req.body.linkedinURL,
         youtubeURL: req.body.youtubeURL,
         facebookURL: req.body.facebookURL,
+        instagramURL: req.body.instagramURL,
     }
 
     if (req.files && req.files.avatar) {
@@ -178,7 +181,7 @@ export const updatePassword = catchAsyncErrors(async (req, res, next) => {
     }
 
     if (newPassword !== confirmNewPassword) {
-        return next(new ErrorHandler('Password does not match', 400));
+        return next(new ErrorHandler('La contraseña no coincide', 400));
     }
 
     user.password = newPassword;
@@ -203,10 +206,17 @@ export const getUserForPortfolio = catchAsyncErrors(async (req, res, next) => {
 
 // FORGOT PASSWORD
 export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
+
+    const { email } = req.body;
+    
+    if (!email) {
+        return next(new ErrorHandler('Por favor, ingresa un correo electrónico', 400));
+    }
+
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-        return next(new ErrorHandler('User not found with this email', 404));
+        return next(new ErrorHandler('Usuario no encontrado con este correo electrónico.', 404));
     }
 
     const resetToken = user.getResetPasswordToken();
@@ -220,13 +230,13 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
     try {
         await sendEmail({
             email: user.email,
-            subject: 'Portfolio Password Recovery',
+            subject: 'Recuperación de contraseña de Portafolio',
             message,
         });
 
         res.status(200).json({
             success: true,
-            message: `Email sent to: ${user.email}`,
+            message: `Correo enviado a: ${user.email}`,
         });
     }
     catch (error) {
@@ -251,11 +261,11 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     });
 
     if (!user) {
-        return next(new ErrorHandler('Password reset token is invalid or has been expired', 400));
+        return next(new ErrorHandler('El token de restablecimiento de contraseña no es válido o ha expirado.', 400));
     }
 
     if (req.body.password !== req.body.confirmPassword) {
-        return next(new ErrorHandler('Password does not match', 400));
+        return next(new ErrorHandler('La contraseña no coincide', 400));
     }
 
     user.password = await req.body.password;
@@ -266,5 +276,5 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
 
     await user.save();
 
-    generateToken(user, "Reset Password Successfully", 200, res);
+    generateToken(user, "Contraseña restablecida con éxito.", 200, res);
 }); 
