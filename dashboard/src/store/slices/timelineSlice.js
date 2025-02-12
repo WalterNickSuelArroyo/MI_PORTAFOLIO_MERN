@@ -76,7 +76,7 @@ export const getAllTimeline = () => async (dispatch) => {
             { withCredentials: true }
         );
         dispatch(
-            timelineSlice.actions.getAllTimelineSuccess(response.data.timelines)
+            timelineSlice.actions.getAllTimelineSuccess(response.data.timeline)
         );
         dispatch(timelineSlice.actions.clearAllErrors());
     } catch (error) {
